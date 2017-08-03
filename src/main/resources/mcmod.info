@@ -1,0 +1,16 @@
+[
+{
+  "modid": "reiqsmod",
+  "name": "ReiqsMod",
+  "description": "Reiq's quake mod",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Reiq"],
+  "credits": "Just Reiq",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
