@@ -1,5 +1,7 @@
 package com.reiq.reiqsmod.Chat;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -13,37 +15,22 @@ import net.minecraft.util.text.TextFormatting;
 
 public class Execute {
 
-	public static HashMap<String,Integer> current = new HashMap<String,Integer>();
-
 	public static HashMap<String,Integer> session = new HashMap<String,Integer>();
 
-	public static int getInfo(String type) {
+	public static int getInfo(String type) { if (session.containsKey(type)) { return session.get(type);}return 0; }
 
-		if (session.containsKey(type)) {
-
-			return session.get(type);
-
-		}
-
-		return 0;
-	}
+	public static void addStat(String type) { if (!session.containsKey(type)) { session.put(type, 1); } else { session.put(type, session.get(type) + 1); }}
 
 	public static boolean execute(Type t, HashMap<String,String> map) {
 
-		if (t.equals(Type.OTHER)) { return false; }
-
-		if (t.equals(Type.CHAT)) { return doChat(map);}
+		if (t.equals(Type.CHAT) || t.equals(Type.OTHER)) { return false; }
 
 		return doQuake(t, map);
 	}
 
 	private static boolean doQuake(Type t, HashMap<String,String> map) {
 
-		boolean r = false;
-
 		switch (t) {
-
-		case START: current.clear(); return false;
 
 		case END:
 
@@ -51,24 +38,9 @@ public class Execute {
 			name = ReiqsMod.instance().mc().thePlayer.getName(), 
 			winner = map.get("winner");
 
-			if (winner.equals(name)) {
+			if (winner.equals(name)) { addStat("wins"); } else { addStat("losses"); }
 
-				if (!session.containsKey("wins")) { session.put("wins", 1); }
-
-				else { session.put("wins", session.get("wins") + 1); }
-
-			} else {
-
-				if (!session.containsKey("losses")) { session.put("losses", 1); }
-
-				else { session.put("losses", session.get("losses") + 1); }
-			}
-
-			if (!session.containsKey("games")) { session.put("games", 1); }
-
-			else { session.put("games", session.get("games") + 1); }
-
-			current.clear();
+			addStat("games");
 
 			return false;
 
@@ -80,13 +52,7 @@ public class Execute {
 
 			int coins = Integer.valueOf(c);
 
-			if (!current.containsKey("coins")) { current.put("coins", coins); }
-
-			else { current.put("coins", current.get("coins") + coins); }
-
-			if (!session.containsKey("coins")) { session.put("coins", coins); }
-
-			else { session.put("coins", session.get("coins") + coins); }
+			addStat("coins");
 
 			TextComponentString msg = new TextComponentString(TextFormatting.BLUE + "+" + TextFormatting.GOLD + coins + TextFormatting.BLUE + " coins!");
 
@@ -110,44 +76,9 @@ public class Execute {
 
 			boolean hs = Boolean.valueOf(map.get("headshot"));
 
-			if (k.equals(n)) {
+			if (k.equals(n)) { kill = true; addStat("kills"); if (hs) { addStat("headshots"); }}
 
-				kill = true;
-
-				if (!current.containsKey("kills")) { current.put("kills", 1); }
-
-				else { current.put("kills", current.get("kills") + 1); }
-
-				if (!session.containsKey("kills")) { session.put("kills", 1); }
-
-				else { session.put("kills", session.get("kills") + 1); }
-
-				if (hs) {
-
-					if (!current.containsKey("headshots")) { current.put("headshots", 1); }
-
-					else { current.put("headshots", current.get("headshots") + 1); }
-
-					if (!session.containsKey("headshots")) { session.put("headshots", 1); }
-
-					else { session.put("headshots", session.get("headshots") + 1); }
-				}
-
-			}
-
-			if (d.equals(n)) {
-
-				death = true;
-
-				if (!current.containsKey("deaths")) { current.put("deaths", 1); }
-
-				else { current.put("deaths", current.get("deaths") + 1); }
-
-				if (!session.containsKey("deaths")) { session.put("deaths", 1); }
-
-				else { session.put("deaths", session.get("deaths") + 1); }
-
-			}
+			if (d.equals(n)) { death = true; addStat("deaths"); }
 
 			//TODO make custom msg configurable
 
@@ -165,17 +96,7 @@ public class Execute {
 
 			String type = map.get("type");
 
-			if (sn.equals(pn)) {
-
-				if (!current.containsKey("streaks")) { current.put("streaks", 1); }
-
-				else { current.put("streaks", current.get("streaks") + 1); }
-
-				if (!session.containsKey("streaks")) { session.put("streaks", 1); }
-
-				else { session.put("streaks", session.get("streaks") + 1); }
-
-			}
+			if (sn.equals(pn)) { addStat("streaks"); }
 
 			TextComponentString mg = new TextComponentString(TextFormatting.DARK_AQUA + sn + " " + TextFormatting.BLUE + type);
 
@@ -206,18 +127,6 @@ public class Execute {
 
 			return true;
 
-		default: break; }
-
-		return r;
-	}
-
-	private static boolean doChat(HashMap<String,String> map) {
-
-		boolean r = false;
-
-		String type = map.get("type");
-
-
-		return r;
+		default: return false; }
 	}
 }
