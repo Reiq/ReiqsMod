@@ -1,9 +1,9 @@
-package com.reiq.reiqsmod.Chat;
+package com.reiq.reiqsmod.chat;
 
 import java.util.HashMap;
 
 import com.reiq.reiqsmod.Util;
-import com.reiq.reiqsmod.Chat.ParseType.Type;
+import com.reiq.reiqsmod.chat.ParseType.Type;
 
 public class ParseInfo {
 
@@ -29,21 +29,6 @@ public class ParseInfo {
 
 		default: return map; }
 
-	}
-	
-	private static HashMap<String, String> getPowerup(String mu) {
-
-		HashMap<String, String> map = new HashMap<String, String>();
-		
-		String[] s = mu.split("[ ]+");
-		
-		map.put("name", s[0]);
-		
-		String type = s[3] + " " + s[4];
-		
-		map.put("type", type);
-		
-		return map;
 	}
 	
 	private static HashMap<String, String> getChat(String mu) {
@@ -149,6 +134,18 @@ public class ParseInfo {
 		return map;
 	}
 
+	private static HashMap<String, String> getPowerup(String mu) {
 
-
+		HashMap<String, String> map = new HashMap<String, String>();
+		
+		String[] s = mu.split("[ ]+");
+		
+		map.put("name", s[0]);
+		
+		String type = s[3] + " " + s[4];
+		
+		map.put("type", type);
+		
+		return map;
+	}
 }

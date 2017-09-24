@@ -1,31 +1,23 @@
 package com.reiq.reiqsmod;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.lwjgl.input.Keyboard;
 
-import com.reiq.reiqsmod.Chat.Execute;
-import com.reiq.reiqsmod.Chat.ParseInfo;
-import com.reiq.reiqsmod.Chat.ParseType;
-import com.reiq.reiqsmod.Chat.ParseType.Type;
-import com.reiq.reiqsmod.Config.Config;
-import com.reiq.reiqsmod.Config.ConfigGui;
-import com.reiq.reiqsmod.Gui.Gui;
-import com.reiq.reiqsmod.Hud.Stats;
+import com.reiq.reiqsmod.chat.Execute;
+import com.reiq.reiqsmod.chat.ParseInfo;
+import com.reiq.reiqsmod.chat.ParseType;
+import com.reiq.reiqsmod.chat.ParseType.Type;
+import com.reiq.reiqsmod.cmd.CmdQS;
+import com.reiq.reiqsmod.config.ReiqConfig;
+import com.reiq.reiqsmod.config.ReiqConfigGui;
+import com.reiq.reiqsmod.hud.Stats;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.scoreboard.ScoreObjective;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.util.StringUtils;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.FMLClientHandler;
@@ -39,26 +31,26 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientDisconnectionFromServerEvent;
 
-@Mod(modid=ReiqsMod.MODID,name=ReiqsMod.NAME,version=ReiqsMod.VERSION,clientSideOnly=true,acceptedMinecraftVersions="*")
+@Mod(modid = ReiqsMod.MODID, name = ReiqsMod.NAME, version = ReiqsMod.VERSION, clientSideOnly = true, acceptedMinecraftVersions = "*", guiFactory = "com.reiq.reiqsmod.config.ReiqConfigFactory")
+
 public class ReiqsMod {
 
-	public static final String MODID = "reiqsmod", NAME = "ReiqsMod", VERSION = "1.0";
-
 	private Minecraft mc;
-	public Minecraft mc() { return mc; }
-
 	private static ReiqsMod instance;
+	private boolean isHypixel, isDebug;
+
+	public static final String MODID = "reiqsmod", NAME = "ReiqsMod", VERSION = "1.0";
+	public Minecraft mc() { return mc; }
 	public static ReiqsMod instance() { return instance; }
-
-	public static KeyBinding[] keys;
-
-	public Config config;
+	public ReiqConfig config;
 
 	@EventHandler public void preInit(FMLPreInitializationEvent event) {
 		
-		config = new Config(event.getSuggestedConfigurationFile());
+		config = new ReiqConfig(event.getSuggestedConfigurationFile());
+		
 		config.syncConfig();
 		
 		this.instance = this; 
@@ -67,37 +59,37 @@ public class ReiqsMod {
 	@EventHandler
 	public void init(FMLInitializationEvent event) {
 		
+		isDebug = true;
+		
+		isHypixel = false;
+		
 		this.mc = Minecraft.getMinecraft();
 		
 		MinecraftForge.EVENT_BUS.register(this);
 		
-		keys = new KeyBinding[3];
+		ClientCommandHandler.instance.registerCommand(new CmdQS());
 		
-		keys[0] = new KeyBinding("Join Quake-Solo", Keyboard.KEY_RIGHT, "key.categories.multiplayer");
-		keys[1] = new KeyBinding("Join Quake-Team", Keyboard.KEY_LEFT, "key.categories.multiplayer");
-		keys[2] = new KeyBinding("Open ReiqsMod Config", Keyboard.KEY_BACKSLASH, "key.categories.multiplayer");
-		
-		for (int i = 0; i < keys.length; ++i) { ClientRegistry.registerKeyBinding(keys[i]); }
+		Util.bindKeys();
 	}
 
 	@SubscribeEvent
 	public void onKeyInput(KeyInputEvent event) {
-		if (keys[0].isPressed()) { mc().thePlayer.sendChatMessage("/play quake_solo"); }
 
-		if (keys[1].isPressed()) { mc().thePlayer.sendChatMessage("/play quake_teams"); }
+		//if (!isDebug || !isHypixel) { return; }
 
-		if (keys[2].isPressed()) { FMLClientHandler.instance().getClient().displayGuiScreen(new Gui());}
+		if (Util.keys[0].isPressed()) { mc().thePlayer.sendChatMessage("/play quake_solo"); }
+		if (Util.keys[1].isPressed()) { mc().thePlayer.sendChatMessage("/play quake_teams"); }
+		if (Util.keys[2].isPressed()) { FMLClientHandler.instance().getClient().displayGuiScreen(new ReiqConfigGui(null)); }
 	}
 
 	@SubscribeEvent
 	public void readChat(ClientChatReceivedEvent event) {
 
+		//if (!isDebug || !isHypixel) { return; }
+
 		String mu = event.getMessage().getUnformattedText();
-
 		Type t = ParseType.parse(mu);
-
 		HashMap<String, String> i = ParseInfo.parse(t, mu);
-
 		boolean b = Execute.execute(t, i);
 
 		event.setCanceled(b);
@@ -106,41 +98,37 @@ public class ReiqsMod {
 	}
 
 	@SubscribeEvent
-	public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
-
-		try {
-
-			if(event.getModID().equals(MODID)){ config.syncConfig(); }} 
-
-		catch(Exception ex) {
-
-			ex.printStackTrace(); 
-
-		}
-	}
-
-	/*
-	@SubscribeEvent
 	public void onRenderTick(TickEvent.RenderTickEvent event) {
+
+		//if (!isDebug || !isHypixel) { return; }
+
 		try {
-			
+
 			GuiScreen screen = mc.currentScreen;
 
 			if (mc.theWorld != null) {
-				
+
 				WorldClient world = mc.theWorld;
-				
-				int w = screen.width / 2;
-				int h = screen.height / 4;
-				
-				if (event.phase == Phase.END) { Stats.onRender(); }
-			}
+
+				if (event.phase == Phase.END) { Stats.onRender(); }}
 			
 		} catch (Exception e) { e.printStackTrace(); }
-	
+
 	}
 
-	*/
+	@SubscribeEvent
+	public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
+
+		try { if(event.getModID().equals(MODID)){ config.syncConfig(); }}
+
+		catch (Exception ex) { ex.printStackTrace(); } 
+	}
+
+	@SubscribeEvent
+	public void serverJoin(ClientConnectedToServerEvent event) { if (event.getManager().getRemoteAddress().toString().contains("hypixel")) { isHypixel = true; }}
+
+	@SubscribeEvent
+	public void serverLeave(ClientDisconnectionFromServerEvent event) { if (event.getManager().getRemoteAddress().toString().contains("hypixel")) { isHypixel = false; }}
 
 	/*
 

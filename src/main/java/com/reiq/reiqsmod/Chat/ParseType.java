@@ -1,4 +1,4 @@
-package com.reiq.reiqsmod.Chat;
+package com.reiq.reiqsmod.chat;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -10,7 +10,7 @@ import com.reiq.reiqsmod.Util;
 
 public class ParseType {
 
-	public static enum Type {PVP, STREAK, SHUTDOWN, POWERUP, COINS, CHAT, START, END, OTHER }
+	public static enum Type { PVP, STREAK, SHUTDOWN, POWERUP, COINS, CHAT, START, END, OTHER }
 
 	public static String last_killer;
 
@@ -35,19 +35,6 @@ public class ParseType {
 		else if (isEnd(mu)) { return Type.END; }
 
 		return Type.OTHER;
-	}
-
-	public static boolean isPowerup(String mu) {
-
-		String name = "";
-
-		for (String s : Util.getPlayers()) { if (mu.startsWith(s)) { name = s; } }
-
-		if (mu.startsWith(name + " activated the SPEED BOOST powerup!")) { return true; }
-
-		if (mu.startsWith(name + " activated the SPEED BOOST powerup!")) { return true; }
-
-		return false;
 	}
 
 	public static boolean isStart(String mu) {
@@ -173,6 +160,19 @@ public class ParseType {
 			return true;
 
 		}
+
+		return false;
+	}
+	
+	public static boolean isPowerup(String mu) {
+
+		String name = "";
+
+		for (String s : Util.getPlayers()) { if (mu.startsWith(s)) { name = s; } }
+
+		if (mu.startsWith(name + " activated the SPEED BOOST powerup!")) { return true; }
+
+		if (mu.startsWith(name + " activated the RAPID FIRE powerup!")) { return true; }
 
 		return false;
 	}

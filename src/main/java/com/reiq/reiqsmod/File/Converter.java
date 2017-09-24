@@ -1,4 +1,4 @@
-package com.reiq.reiqsmod.File;
+package com.reiq.reiqsmod.file;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,7 +14,7 @@ import com.google.gson.Gson;
 public class Converter {
 
 	public static void write(HashMap<String, String> map, File loc) {
-
+		
 		Gson gson = new Gson();
 
 		String json = gson.toJson(map);
@@ -25,7 +25,7 @@ public class Converter {
 
 		bw.close();}
 
-		catch (IOException e) { e.printStackTrace(); }
+		catch (IOException e) { e.printStackTrace(); System.out.println("Error writing file."); }
 
 	}
 
@@ -37,7 +37,7 @@ public class Converter {
 
 		return gson.fromJson(br, HashMap.class);}
 
-		catch (FileNotFoundException e) { e.printStackTrace(); }
+		catch (FileNotFoundException e) { e.printStackTrace(); System.out.println("Error reading file."); }
 
 		return null;
 

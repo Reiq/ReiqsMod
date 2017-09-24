@@ -6,15 +6,61 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.reiq.reiqsmod.Chat.Execute;
+import org.lwjgl.input.Keyboard;
+
+import com.reiq.reiqsmod.chat.Execute;
+import com.reiq.reiqsmod.config.ReiqConfig;
+import com.reiq.reiqsmod.file.Pull;
+import com.reiq.reiqsmod.file.Push;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 public class Util {
+
+	public static KeyBinding[] keys;
+
+	public static TextComponentString pvpMsg(String k, String msg, String d, boolean hs) {
+
+		TextComponentString tcs = new TextComponentString("");
+
+		ReiqConfig cfg = ReiqsMod.instance().config;
+		
+		String
+		
+		color_hs = cfg.chat_pvp_headshot_color.substring(0, 2),
+		color_k = cfg.chat_pvp_killer_color.substring(0, 2),
+		color_m = cfg.chat_pvp_message_color.substring(0, 2),
+		color_v = cfg.chat_pvp_victim_color.substring(0, 2),
+
+		n = ReiqsMod.instance().mc().thePlayer.getName(),
+		cmsg = Pull.pull("User.txt", "killmessage"),
+		k1 = color_k + k + " ",
+		m1 = color_m + msg + " ",
+		d1 = color_v + d,
+		h1 = "";
+		
+		if (k.equals(n)) {
+			k1 = color_k + "" + TextFormatting.BOLD + k + " " + TextFormatting.RESET;
+			m1 = color_m + "" + cmsg + " ";
+		}
+
+		if (d.equals(n)) { d1 = color_v + TextFormatting.BOLD + d + TextFormatting.RESET; }
+
+		if (hs) { h1 = color_hs + " HS"; }
+
+		tcs.appendText(k1);
+		tcs.appendText(m1);
+		tcs.appendText(d1);
+		tcs.appendText(h1);
+
+		return tcs;
+	}
 
 	public static Set<String> getPlayers() {
 
@@ -33,37 +79,26 @@ public class Util {
 		return p;
 	}
 
-	public static String[] colors() {
-
-		final String[] colors = {
-				
-				TextFormatting.AQUA + "Aqua",TextFormatting.BLACK + "Black",TextFormatting.BLUE + "Blue",TextFormatting.DARK_AQUA + "Dark_Aqua", TextFormatting.DARK_BLUE + "Dark_Blue", 
-				TextFormatting.DARK_GRAY + "Dark_Gray", TextFormatting.DARK_GREEN + "Dark_Green", TextFormatting.DARK_PURPLE + "Dark_Purple", TextFormatting.GOLD + "Gold", 
-				TextFormatting.GRAY + "Gray", TextFormatting.LIGHT_PURPLE + "Light_Purple", TextFormatting.RED + "Red", TextFormatting.WHITE + "White", TextFormatting.YELLOW + "Yellow"};
-		
-		return colors;
-	}
-	
 	public static String getRatio(String type) {
-		
+
 		int kill = Execute.getInfo("kills"), wins = Execute.getInfo("wins");;
-		
+
 		Double death = (double) Execute.getInfo("deaths"), win = (double) wins, loss = (double) Execute.getInfo("losses"), kd = (double) kill, wl = (double) 0, kw = (double) 0;
-		
+
 		if (death != 0) { kd = kill/death; } if (loss != 0) { wl = wins/loss; } if (win != 0) { kw = kill/win; }
-		
+
 		NumberFormat format = new DecimalFormat("#0.00");
-		
+
 		switch(type) {
-		
+
 		case "kd": return format.format(kd);
-		
+
 		case "wl": return format.format(wl);
-		
+
 		case "kw": return format.format(kw);
-		
+
 		default: return "Error"; }
-		
+
 	}
 
 	public static Set<String> getRanks() {
@@ -106,42 +141,25 @@ public class Util {
 		return km;
 	}
 
-	//TODO make custom msg configurable
+	public static String[] colors() {
 
-	public static TextComponentString pvpMsg(String k, String msg, String d, boolean hs) {
+		final String[] colors = {
 
-		TextComponentString tcs = new TextComponentString("");
+				TextFormatting.AQUA + "Aqua",TextFormatting.BLACK + "Black",TextFormatting.BLUE + "Blue",TextFormatting.DARK_AQUA + "Dark_Aqua", TextFormatting.DARK_BLUE + "Dark_Blue", 
+				TextFormatting.DARK_GRAY + "Dark_Gray", TextFormatting.DARK_GREEN + "Dark_Green", TextFormatting.DARK_PURPLE + "Dark_Purple", TextFormatting.GOLD + "Gold", 
+				TextFormatting.GRAY + "Gray", TextFormatting.LIGHT_PURPLE + "Light_Purple", TextFormatting.RED + "Red", TextFormatting.WHITE + "White", TextFormatting.YELLOW + "Yellow"};
 
-		String n = ReiqsMod.instance().mc().thePlayer.getName();
-
-		String cmsg = "Boop'd";
-
-		String k1 = TextFormatting.DARK_AQUA + k + " ";
-
-		String m1 = TextFormatting.AQUA + msg + " ";
-
-		String d1 = TextFormatting.DARK_AQUA + d;
-
-		String h1 = "";
-
-		if (k.equals(n)) { 
-
-			k1 = TextFormatting.DARK_RED + "" + TextFormatting.BOLD + k + " "; 
-			m1 = TextFormatting.DARK_AQUA + "" + TextFormatting.BOLD + cmsg + " ";
-			d1 = TextFormatting.DARK_RED + "" + TextFormatting.BOLD + d; 
-
-		}
-
-		if (d.equals(n)) { d1 = TextFormatting.DARK_AQUA + d; }
-
-		if (hs) { h1 = TextFormatting.RED + " HS"; }
-
-		tcs.appendText(k1);
-		tcs.appendText(m1);
-		tcs.appendText(d1);
-		tcs.appendText(h1);
-
-		return tcs;
+		return colors;
 	}
 
+	public static void bindKeys() {
+
+		keys = new KeyBinding[3];
+
+		keys[0] = new KeyBinding("Join Quake-Solo", Keyboard.KEY_RIGHT, "key.categories.multiplayer");
+		keys[1] = new KeyBinding("Join Quake-Team", Keyboard.KEY_LEFT, "key.categories.multiplayer");
+		keys[2] = new KeyBinding("Open ReiqsMod Config", Keyboard.KEY_BACKSLASH, "key.categories.multiplayer");
+
+		for (int i = 0; i < keys.length; ++i) { ClientRegistry.registerKeyBinding(keys[i]); }
+	}
 }

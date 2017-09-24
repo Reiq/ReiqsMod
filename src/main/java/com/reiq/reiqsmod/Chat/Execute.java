@@ -1,4 +1,4 @@
-package com.reiq.reiqsmod.Chat;
+package com.reiq.reiqsmod.chat;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -8,7 +8,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import com.reiq.reiqsmod.ReiqsMod;
 import com.reiq.reiqsmod.Util;
-import com.reiq.reiqsmod.Chat.ParseType.Type;
+import com.reiq.reiqsmod.chat.ParseType.Type;
+import com.reiq.reiqsmod.config.ReiqConfig;
 
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
@@ -17,9 +18,11 @@ public class Execute {
 
 	public static HashMap<String,Integer> session = new HashMap<String,Integer>();
 
-	public static int getInfo(String type) { if (session.containsKey(type)) { return session.get(type);}return 0; }
+	public static int getInfo(String type) { if (session.containsKey(type)) { return session.get(type);} return 0; }
 
 	public static void addStat(String type) { if (!session.containsKey(type)) { session.put(type, 1); } else { session.put(type, session.get(type) + 1); }}
+
+	public static void resetStat(String type) { session.put(type, 0); }
 
 	public static boolean execute(Type t, HashMap<String,String> map) {
 
@@ -28,17 +31,19 @@ public class Execute {
 		return doQuake(t, map);
 	}
 
+	public static ReiqConfig cfg = ReiqsMod.instance().config;
+
 	private static boolean doQuake(Type t, HashMap<String,String> map) {
 
 		switch (t) {
 
 		case END:
 
-			String 
-			name = ReiqsMod.instance().mc().thePlayer.getName(), 
-			winner = map.get("winner");
+			String name = ReiqsMod.instance().mc().thePlayer.getName(), winner = map.get("winner");
 
-			if (winner.equals(name)) { addStat("wins"); } else { addStat("losses"); }
+			if (winner.equals(name)) { addStat("wins"); addStat("winstreak"); resetStat("lossstreak"); }
+
+			else { addStat("losses"); addStat("lossstreak"); resetStat("winstreak"); }
 
 			addStat("games");
 
@@ -54,7 +59,15 @@ public class Execute {
 
 			addStat("coins");
 
-			TextComponentString msg = new TextComponentString(TextFormatting.BLUE + "+" + TextFormatting.GOLD + coins + TextFormatting.BLUE + " coins!");
+			if (!cfg.chat_coins_enabled) { return true; }
+
+			if (cfg.chat_coins_cust_enabled) { return false; }
+
+			String ms_color = cfg.chat_main_color.substring(0, 2);
+
+			String coins_color = cfg.chat_coins_color.substring(0, 2);
+
+			TextComponentString msg = new TextComponentString(ms_color + "+" + coins_color + coins + ms_color + " coins!");
 
 			ReiqsMod.instance().mc().thePlayer.addChatMessage(msg);
 
@@ -62,25 +75,21 @@ public class Execute {
 
 		case PVP: 
 
-			String n = ReiqsMod.instance().mc().thePlayer.getName();
+			String n = ReiqsMod.instance().mc().thePlayer.getName(), k = map.get("killer"), defmsg = map.get("message"), d = map.get("victim");
 
-			String k = map.get("killer");
+			boolean kill = false, death = false, hs = Boolean.valueOf(map.get("headshot"));
 
-			String defmsg = map.get("message");
+			if (k.equals(n)) { kill = true; addStat("kills"); addStat("killstreak"); 
 
-			String d = map.get("victim");
+			if (hs) { addStat("headshots"); addStat("headshotstreak"); }
 
-			boolean kill = false;
+			else { resetStat("headshotstreak"); }}
 
-			boolean death = false;
+			if (d.equals(n)) { death = true; addStat("deaths"); resetStat("deathstreak"); }
 
-			boolean hs = Boolean.valueOf(map.get("headshot"));
+			if (!cfg.chat_pvp_enabled) { return true; }
 
-			if (k.equals(n)) { kill = true; addStat("kills"); if (hs) { addStat("headshots"); }}
-
-			if (d.equals(n)) { death = true; addStat("deaths"); }
-
-			//TODO make custom msg configurable
+			if (cfg.chat_pvp_cust_enabled) { return false; }
 
 			TextComponentString tcs = Util.pvpMsg(k, defmsg, d, hs);
 
@@ -90,40 +99,68 @@ public class Execute {
 
 		case STREAK: 
 
-			String pn = ReiqsMod.instance().mc().thePlayer.getName();
-
-			String sn = map.get("name");
-
-			String type = map.get("type");
+			String pn = ReiqsMod.instance().mc().thePlayer.getName(), sn = map.get("name"), type = map.get("type");
 
 			if (sn.equals(pn)) { addStat("streaks"); }
 
-			TextComponentString mg = new TextComponentString(TextFormatting.DARK_AQUA + sn + " " + TextFormatting.BLUE + type);
+			if (!cfg.chat_streak_enabled) { return true; }
+
+			if (cfg.chat_streak_cust_enabled) { return false; }
+
+			String mq_color = cfg.chat_main_color.substring(0, 2);
+
+			String nme_color = cfg.chat_streak_name_color.substring(0, 2);
+
+			TextComponentString mg = new TextComponentString(nme_color + sn + " " + mq_color + type);
 
 			ReiqsMod.instance().mc().thePlayer.addChatMessage(mg);
 
 			return true;
 
-		case SHUTDOWN: 
+		case SHUTDOWN:
 
-			String shut = map.get("shut");
+			String shut = map.get("shut"), shot = map.get("shot");
 
-			String shot = map.get("shot");
+			if (!cfg.chat_shutdown_enabled) { return true; }
 
-			TextComponentString mew = new TextComponentString(TextFormatting.DARK_AQUA + shut + TextFormatting.BLUE + " got shutdown by " + TextFormatting.DARK_AQUA + shot + TextFormatting.BLUE + "!");
+			if (cfg.chat_shutdown_cust_enabled) { return false; }
+
+			String md_color = cfg.chat_main_color.substring(0, 2);
+
+			String namaa_color = cfg.chat_shutdown_name_color.substring(0, 2);
+
+			TextComponentString mew = new TextComponentString(namaa_color + shut + md_color + " got shutdown by " + namaa_color + shot + md_color + "!");
 
 			ReiqsMod.instance().mc().thePlayer.addChatMessage(mew);
 
 			return true;
-		case POWERUP: 
 
-			String plr = map.get("name");
+		case POWERUP:
 
-			String typep = map.get("type");
+			String plr = map.get("name"), typep = map.get("type");
 
-			TextComponentString meas = new TextComponentString(TextFormatting.DARK_AQUA + plr + TextFormatting.BLUE + " activated " + TextFormatting.GOLD + typep + TextFormatting.BLUE + "!");
+			if (!cfg.chat_powerup_enabled) { return true; }
 
-			ReiqsMod.instance().mc().thePlayer.addChatMessage(meas);
+			if (!cfg.chat_powerup_cust_enabled) { return false; }
+
+			String m_colorr = cfg.chat_main_color.substring(0, 2);
+
+			String name_colorr = cfg.chat_powerup_name_color.substring(0, 2);
+
+			if (typep.equals("SPEED BOOST")) {
+
+				String speed = cfg.chat_powerup_speed_color.substring(0, 2);
+
+				TextComponentString meas = new TextComponentString(name_colorr + plr + m_colorr + " activated " + speed + typep + m_colorr + "!");
+				ReiqsMod.instance().mc().thePlayer.addChatMessage(meas);
+
+			} else if (typep.equals("RAPID FIRE")) {
+
+				String rapid = cfg.chat_powerup_rapid_color.substring(0, 2);
+
+				TextComponentString meas = new TextComponentString(name_colorr + plr + m_colorr + " activated " + rapid + typep + m_colorr + "!");
+				ReiqsMod.instance().mc().thePlayer.addChatMessage(meas);
+			}
 
 			return true;
 
